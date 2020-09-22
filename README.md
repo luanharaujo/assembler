@@ -6,11 +6,40 @@ This project aims to make an assembler program, to assemble a didactic assemble 
 
 **Student ID: 12/0125781**
 
+## The choice
+
+The student have to make a choice between one of the follow:
+
+- [x] The assembler will accept MACRO directive; or
+- [ ] identify errors during assembly.
+
+### **On this work I chose accept MACRO directive.** 
+
+The choice above was made with the following conditions;
+- 2 is the maximum number of MACROS;
+- a MACRO will never call an other MACRO;
+- a MACRO will never have any directive; and
+- each MACRO can have up to 2 arguments. 
+
 ## Prerequisites
 
+This program should work on any Unix base system with a modern GCC. But It was developed in a **Ubuntu 20.04** running on a WSL inside a Windows 10. The compiler used was a **gcc (Ubuntu 9.3.0-10ubuntu2) 9.3.0**
+
 ## Compilation
+```
+gcc -o montador montador.c
+```
 
 ## Usage
+
+### First
+```
+./montador -p input_file.asm
+```
+### Second
+```
+./montador -o input_file.pre
+```
 
 ## Specifications:
 The instruction set of this hypothetic assemble have only 14 instructions, presented in the table below.   
@@ -66,10 +95,43 @@ N4: SPACE
 ```
 
 ### The assembler must:
-- **NOT** be case sensitive.
-- Ignore any excessive spaces, enters, tabs, etc...
-- The **CONST** must accept decimal positive and negative numbers.
-- Be able to ignore comment (mark whit ';') at any point.
-- The **COPY** must use a common and a space between arguments. (COPY A, B) 
-- Accept line break after a line marker
+- **NOT** be case sensitive;
+- ignore any excessive spaces, enters, tabs, etc;
+- the **CONST** must accept decimal positive and negative numbers;
+- be able to ignore comment (mark whit ';') at any point;
+- the **COPY** must use a common and a space between arguments. (COPY A, B) ;
+- accept line break after a line marker;
+- do one of the following for each time its called:
+  - If called whit the -p option the assembler must do the pre-processing and generate a .pre text file whit the same name of the input file.
+  - If called whit the -o option the assembler must do the assembling, base on the .pre file, and generate a .obj text file whit the same name of the input file.
   
+### The input assemble code must:
+- Have all the **EQU** directive in the beginning of the programe, **before the SECTION DATA and SECTION TEXT**.
+- **NOT** have a **IF** without a privies **EQU**. 
+  
+
+### Use exemple of IF and EQU
+
+#### Input file:
+```
+L1:  EQU 1
+L2:  EQU 0
+SECTION TEXT
+IF L1
+LOAD SPACE ;do the operation if L1 is true
+IF L2
+INPUT SPACE ;do the operation if L2 is true
+
+SECTION DATA
+N: SPACE
+```
+### Pre-processe file:
+
+```
+SECTION TEXT
+LOAD SPACE
+
+SECTION DATA
+N: SPACE
+```
+
