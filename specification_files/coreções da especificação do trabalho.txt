@@ -1,0 +1,21 @@
+	
+Corrigindo a nota do trabalho, o certo deveria ser:
+
+
+Nota: não serão modificados os arquivos de teste para adaptar ao programa desenvolvido pelo grupo. Por exemplo, foi especificado que o COPY deve receber operando separados por vírgula e COM espaço entre os operandos. Se a grupo indica que o programa deles funciona sem ESPAÇO entre os operandos, o arquivo de teste NAO sera modificado e o teste ser´a dado como FALHO.
+
+
+Caros alunos,
+
+
+Outra coisa que parece estar errada no trabalho que que o modo "-p" é para pre-processar e gerar o arquivo .PRE na saída. O modo "-o" é para MONTAR é gerar o arquivo .OBJ na saída. Acho que todo mundo deve ter entendido isso, mas parece que na esquecificação não esta claro que o "-o" é montagem e não pre-processamento. Claro, que para montar precisa pre-processar primeiro. Então, para deixar bem claro como tem que funcionar isso é assim:
+
+
+- O usuário vai primeiro pré-processar gerando o arquivo .PRE
+
+- Depois de pré-processar o usuário vai montar gernado o arquivo .OBJ. Não precisa fazer a opção de montar direto, sem ter pre-processado. Um montador comercial na verdade ao mandar montar ele pre-processa primeiro e depois monta. Alguns montadores dão a opção ao usuário de somente pre-processar para usuario ver o arquivo pre-processado. Mesmo assim, se mandar montar ele internamente vai pre-processar e montar o codigo. O montador de vcs nao funciona assim. O usuario sempre TEM que pre-processar e depois montar manualmente.
+
+
+Att.,
+
+Bruno
