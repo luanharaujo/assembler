@@ -1,6 +1,7 @@
+[comment]: <> (This file was written in markdown and is much more readable if read at: https://github.com/luanharaujo/assembler)
 # Assembler
 
-This project aims to make an assembler program, to assemble a didactic assemble language. This project is the first assignment of the curse Basics Software - CIC116432 – [UnB](https://www.unb.br/) – 2020/01.
+This project aims to make an assembler program, to assemble a didactic assemble language. This project is the first assignment of the course: Basics Software - CIC116432 – [UnB](https://www.unb.br/) – 2020/01.
 
 **Student: Luan Haickel Araújo**
 
@@ -23,7 +24,7 @@ The choice above was made with the following conditions;
 
 ## Prerequisites
 
-This program should work on any Unix base system with a modern GCC. But It was developed in a **Ubuntu 20.04** running on a WSL inside a Windows 10. The compiler used was a **gcc (Ubuntu 9.3.0-10ubuntu2) 9.3.0**
+This program probably works on any Unix base system with a modern GCC. But It was developed in a **Ubuntu 20.04** running on a WSL inside a Windows 10. The compiler used was a **gcc (Ubuntu 9.3.0-10ubuntu2) 9.3.0**.
 
 ## Compilation
 ```
@@ -32,11 +33,11 @@ gcc -o montador montador.c
 
 ## Usage
 
-### First
+### First:
 ```
 ./montador -p input_file.asm
 ```
-### Second
+### Then:
 ```
 ./montador -o input_file.pre
 ```
@@ -62,7 +63,7 @@ The instruction set of this hypothetic assemble have only 14 instructions, prese
 | OUTPUT | 1 | 13 | 2 | STDOUT &#8592; MEN[OP]|
 | STOP | 0 | 14 | 1 | End execution|
 
-The next table define the data allocation memory directives and pre processor directives.
+The next table define the directives for allocating memory in the data segment and pre processor directives.
 
 | Mnemonic | Operators |  Code | Size | Description |
 |:--------:|:-------------:|:-------------:|:-------------:|------|
@@ -77,7 +78,7 @@ The next table define the data allocation memory directives and pre processor di
 
 The identifiers of variables and labels are limited to 50 characters and follow the common rules of the C language.
 
-The TEXT section and DATA section will always be marked and in the same order. Like the exemple below.
+The TEXT section and DATA section will always be marked and will always be in the same order. As in the exemple below.
 
 ```
 SECTION TEXT
@@ -96,10 +97,10 @@ N4: SPACE
 
 ### The assembler must:
 - **NOT** be case sensitive;
-- ignore any excessive spaces, enters, tabs, etc;
+- ignore any excessive space, enter, tab, etc;
 - the **CONST** must accept decimal positive and negative numbers;
-- be able to ignore comment (mark whit ';') at any point;
-- the **COPY** must use a common and a space between arguments. (COPY A, B) ;
+- be able to ignore comment (marked whit ';') at any point;
+- the **COPY** must use a comma and a space between arguments. (COPY A, B) ;
 - accept line break after a line marker;
 - do one of the following for each time its called:
   - If called whit the -p option the assembler must do the pre-processing and generate a .pre text file whit the same name of the input file.
@@ -107,12 +108,12 @@ N4: SPACE
   
 ### The input assemble code must:
 - Have all the **EQU** directive in the beginning of the programe, **before the SECTION DATA and SECTION TEXT**.
-- **NOT** have a **IF** without a privies **EQU**. 
+- **NOT** have a **IF** without a previously **EQU**. 
   
 
-### Use exemple of IF and EQU
+#### Exemple of IF and EQU:
 
-#### Input file:
+###### Input file:
 ```
 L1:  EQU 1
 L2:  EQU 0
@@ -125,7 +126,7 @@ INPUT SPACE ;do the operation if L2 is true
 SECTION DATA
 N: SPACE
 ```
-### Pre-processe file:
+##### Pre-processe file:
 
 ```
 SECTION TEXT
