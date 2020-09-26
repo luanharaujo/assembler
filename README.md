@@ -69,7 +69,7 @@ The next table define the directives for allocating memory in the data segment a
 |:--------:|:-------------:|:-------------:|:-------------:|------|
 | SECTION | 1 | - | 0 | Mark the start of code section (TEXT) or data section (DATA).|
 | SPACE | 0 | - | 1 | Reserve 1 uninitialized memory address for storage one word.|
-| CONST | 1 | - | 1 | Reserve memory for storing a 16-bit integer constant on a decimal or hexadecimal base.|
+| CONST | 1 | - | 1 | Reserve memory for storing a 16-bit integer constant on a decimal base.|
 | EQU | 1 | - | 0 | Creates a textual synonym for a symbol.|
 | IF | 1 | - | 0 | Instructs the assembler to include the **next line of code** only if the operand value is 1|
 | MACRO | 0 | - | 0 | Mark the beginning of a MACRO. Always within the TEXT section and before the main code.|
