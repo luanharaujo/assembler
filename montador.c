@@ -246,7 +246,7 @@ int pre_processor_single_pass(FILE *fp_out, FILE *fp_in)
                     FILE *fp = naming_and_opening_macro_file(macro_index);
                     //TO DO: 
                     //      -copy macro content to the macro file
-                    fclose(macros[macro_index].file_name);
+                    fclose(fp);
                 }
                 else //ENDMACRO whit no MACRO before
                 {
@@ -369,7 +369,7 @@ FILE *naming_and_opening_macro_file(int macro_index)
     {
         sprintf(macros[macro_index].file_name, ".temp_macro_file_%d", i++);
     }
-    while (file_exists);
+    while (file_exists(macros[macro_index].file_name));
 
     return fopen(macros[macro_index].file_name, "w");
 }
