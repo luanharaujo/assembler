@@ -143,11 +143,14 @@ Some exemples codes to be assembled, given by the teacher, can be found in the e
 
 ## Returns
 | Return | Error |  
-|:--------:|:-------------|
+|--------:|:-------------|
 | 0 | No error. |
 | 1 | Wrong number of inputs in the program call.|
 | 2 | Wrong option. |
 | 3 | Error when trying to open the input file. |
 | 4 | Error when trying to create the output file. |
-| 5 | No colon after label |
-| 6 | No comma after first operator of COPY |
+| 5 | No colon after label. |
+| 6 | No comma after first operator of COPY. |
+| 7 | Invalid section or section order. |
+| 8 | ENDMACRO whit out a MACRO. |
+| 9 | Exceeded maximum number of MACROS. |

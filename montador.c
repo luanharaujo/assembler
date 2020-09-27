@@ -3,7 +3,8 @@
 
 //definitions
 #define TABLE_SIZE 21
-enum section{BEFORE_SECTIONS, TEXT, DATA};
+#define MAX_TOKEN_NAME_SIZE 51 //one more than in the specification for the null-string-termination character
+enum section{INVALID ,BEFORE_SECTIONS, TEXT, DATA};
 typedef struct
 {
     char mnemonic[10];
@@ -14,8 +15,22 @@ typedef struct
 }
 operation;
 
+#define MAX_MACROS 2
+#define MAX_MACROS_ARGS 2
+#define MAX_MACRO_FILE_NAME_SIZE 25 //.temp_macro_file_<number>
+typedef struct
+{
+    char name[MAX_TOKEN_NAME_SIZE];
+    int number_of_args;
+    char args_names[MAX_MACROS_ARGS][MAX_TOKEN_NAME_SIZE];
+    int exist;
+    char file_name[MAX_MACRO_FILE_NAME_SIZE]; 
+}
+macro;
+
 //global variables
 operation operations[TABLE_SIZE];
+macro macros[MAX_MACROS];
 
 //prototypes
 void miss_usage(void);
@@ -23,7 +38,13 @@ int pre_processor(char f_in_name[]);
 int assembler(char f_in_name[]);
 int pre_processor_single_pass(FILE *fp_out, FILE *fp_in);
 void init_operations(void);
+void init_macros(void);
 int table_position(char key[]);
+enum section change_section(enum section current, char name_new_section[]);
+int macro_index(char word[]);
+int clean_up_and_return(int error_code);
+int file_exists(char file_name[]);
+FILE* naming_and_opening_macro_file(int macro_index);
 
 int main(int argc, char *argv[])
 {    
@@ -33,6 +54,9 @@ int main(int argc, char *argv[])
         miss_usage();
         return 1; //wrong number of inputs
     }
+
+    init_operations();
+    init_macros();
 
     //analizing option
     if (strcasecmp(argv[1], "-p") == 0)
@@ -46,7 +70,7 @@ int main(int argc, char *argv[])
     else
     {
         miss_usage();
-        return 2; //wrong option
+        return clean_up_and_return(2); //wrong option
     }   
 }
 
@@ -65,7 +89,7 @@ int pre_processor(char f_in_name[])
     if (fp_in == NULL)
     {
         printf("Error when trying to open the file %s\n", f_in_name);
-        return 3;
+        return clean_up_and_return(3);
     }
 
     //open output file
@@ -78,7 +102,7 @@ int pre_processor(char f_in_name[])
     {
         printf("Error when trying to create the file %s\n", f_out_name);
         fclose(fp_in);
-        return 4;
+        return clean_up_and_return(4);
     }
 
     int ret = pre_processor_single_pass(fp_out, fp_in);
@@ -91,35 +115,42 @@ int pre_processor(char f_in_name[])
 
 int pre_processor_single_pass(FILE *fp_out, FILE *fp_in)
 {
-    char word[64];
+    char word[MAX_TOKEN_NAME_SIZE];
     enum section current_section = BEFORE_SECTIONS;
-    int last_of_line = 0;
 
     while (fscanf(fp_in, "%s", word) != EOF)
     {
         int position = table_position(word);
-        if (position == -1) //word is not on table
+        if (position == -1) //first word in line isn't on the table
         {
-            //must be a label
-            int label_length = strlen(word);
-            //lookin for the ":" to check if there are any spaces
-            if (word[label_length - 1] != ':')
+            //let's see if it is a MACRO call...
+            int index = macro_index(word);
+            if(index != -1)//is a MACRO call!
             {
-                char temp[64];
-                fscanf(fp_in, "%s", temp);
-                if (strcasecmp(temp, ":") != 0)
+                //TO DO
+            }
+            else //ok, must be a label then.
+            {
+                int label_length = strlen(word);
+                //lookin for the ":" to check if there are any spaces
+                if (word[label_length - 1] != ':')
                 {
-                    printf("Ërror: missing ':' after label\n");
-                    return 5;
+                    char temp[MAX_TOKEN_NAME_SIZE];
+                    fscanf(fp_in, "%s", temp);
+                    if (strcasecmp(temp, ":") != 0)
+                    {
+                        printf("Ërror: missing ':' after label\n");
+                        return clean_up_and_return(5);
+                    }
+
+                    //fixing the label
+                    word[label_length] = ':';
+                    word[label_length + 1] = '\0';
                 }
 
-                //fixing the label
-                word[label_length] = ':';
-                word[label_length + 1] = '\0';
+                //putting on the pre-precessed file
+                fprintf(fp_out, "%s ", word);
             }
-
-            //putting on the pre-precessed file
-            fprintf(fp_out, "%s ", word);
         }
         else //word is on table
         {
@@ -146,18 +177,19 @@ int pre_processor_single_pass(FILE *fp_out, FILE *fp_in)
                         int operator_length = strlen(word);
                         if (word[operator_length - 1] != ',')
                         {
-                            char temp[64];
+                            char temp[MAX_TOKEN_NAME_SIZE];
                             fscanf(fp_in, "%s", temp);
                             if (strcasecmp(temp, ",") != 0)
                             {
                                 printf("Ërror: missing ',' after first operator of COPY\n");
-                                return 6;
+                                return clean_up_and_return(6);
                             }
 
                             //fixing the operator
                             word[operator_length] = ',';
                             word[operator_length + 1] = '\0';
                         }
+                        //putting on the pre-precessed file
                         fprintf(fp_out, "%s ", word);
                         fscanf(fp_in, "%s", word);
                         fprintf(fp_out, "%s\n", word);
@@ -166,18 +198,112 @@ int pre_processor_single_pass(FILE *fp_out, FILE *fp_in)
             }
             else //isn't a instruction 
             {
-                //TO DO
+                if (strcasecmp(word, "SECTION") == 0)
+                {
+                    //putting on the pre-precessed file
+                    fprintf(fp_out, "%s ", word);
+
+                    //grab and cheking next token
+                    fscanf(fp_in, "%s", word);
+                    current_section = change_section(current_section, word);
+                    if(current_section == INVALID)
+                    {
+                        return clean_up_and_return(7);
+                    }
+
+                    //putting on the pre-precessed file
+                    fprintf(fp_out, "%s\n", word);
+                }
+                else if(strcasecmp(word, "SPACE") == 0)
+                {
+                    //TO DO
+                }
+                else if(strcasecmp(word, "CONST") == 0)
+                {
+                    //TO DO
+                }
+                else if(strcasecmp(word, "EQU") == 0)
+                {
+                    //TO DO
+                }
+                else if(strcasecmp(word, "IF") == 0)
+                {
+                    //TO DO
+                }
+                else if(strcasecmp(word, "MACRO") == 0)
+                {
+                    //finding a blank spot on the macro vector
+                    int macro_index;
+                    while (macro_index < MAX_MACROS && macros[macro_index].exist)
+                    {
+                        macro_index++;
+                    }
+                    if (macro_index == MAX_MACROS)
+                    {
+                        printf("Error: Exceeded maximum number of MACROS.");
+                        return clean_up_and_return(9);
+                    }
+                    FILE *fp = naming_and_opening_macro_file(macro_index);
+                    //TO DO: 
+                    //      -copy macro content to the macro file
+                    fclose(macros[macro_index].file_name);
+                }
+                else //ENDMACRO whit no MACRO before
+                {
+                    printf("Error! ENDMACRO must have a MACRO befor it.\n");
+                    return clean_up_and_return(8);
+                }
             }
         }
     }
 
-    return 0;
+    return clean_up_and_return(0);
 }
 
 int assembler(char f_in_name[])
 {
     //TO DO
     return 0;
+}
+
+//check if is allowed to change from current section to a section named name_new_section
+//if is, returns the new section, if isn't, print a error and return INVALID 
+enum section change_section(enum section current, char name_new_section[])
+{
+    if (strcasecmp(name_new_section, "TEXT") == 0)
+    {
+        if (current == BEFORE_SECTIONS)
+        {
+            return TEXT;
+        }
+        else
+        {
+            printf("Error: SECTION TEXT defines twice.\n");
+            return INVALID;
+        }
+    }
+    else if (strcasecmp(name_new_section, "DATA") == 0)
+    {
+        if (current == BEFORE_SECTIONS)
+        {
+            printf("Error: SECTION DATA can't be defined before SECTION TEXT.\n");
+            return INVALID;
+        }
+        else if (current == TEXT)
+        {
+            return DATA;
+        }
+        else
+        {
+            printf("Error: SECTION DATA defines twice.\n");
+            return INVALID;
+        }
+    }
+    else //invalid section
+    {
+        printf("Error: Invalid section token after SECTION.\n");
+        return INVALID;
+    }
 }
 
 //returns the vector position if the key is on the operations vector, return -1 if the key is not on the vector
@@ -191,6 +317,69 @@ int table_position(char key[])
         }
     }
     return -1;
+}
+
+//returns the macro index if word is the name of a predefined macro
+//returns -1 otherwise
+int macro_index(char word[])
+{
+    for (int i = 0; i < MAX_MACROS; i++)
+    {
+        if (macros[i].exist)
+        {
+            if (strcasecmp(word, macros[i].name) == 0)
+            {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
+int clean_up_and_return(int error_code)
+{
+    //deleting all MACRO files
+    for (int i = 0; i < MAX_MACROS; i++)
+    {
+        if (macros[i].exist)
+        {
+            remove(macros[i].file_name);
+        }
+    }
+    return error_code;
+}
+
+//return 1 if the file exist otherwise return 0
+int file_exists(char file_name[])
+{
+    //try to open file to read
+    FILE *fp;
+    if ((fp = fopen(file_name, "r")))
+    {
+        fclose(fp);
+        return 1;
+    }
+    return 0;
+}
+
+FILE *naming_and_opening_macro_file(int macro_index)
+{
+    int i = 0;
+    do
+    {
+        sprintf(macros[macro_index].file_name, ".temp_macro_file_%d", i++);
+    }
+    while (file_exists);
+
+    return fopen(macros[macro_index].file_name, "w");
+}
+
+void init_macros(void)
+{
+    for (int i = 0; i < MAX_MACROS; i++)
+    {
+        macros[i].exist = 0;
+    }
 }
 
 //filling in the operations vector
