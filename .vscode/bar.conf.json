@@ -1,0 +1,13 @@
+{
+    "commands": {
+        "build": "gcc -Wall -o montador montador.c",
+        "run": "./montador -p fatorial.asm"
+    },
+    "messages": {
+        "building": true,
+        "buildSuccess": true,
+        "buildError": true,
+        "buildErrorMessageBox": true,
+        "run": true
+    }
+}

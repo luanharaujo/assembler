@@ -149,4 +149,5 @@ Some exemples codes to be assembled, given by the teacher, can be found in the e
 | 2 | Wrong option. |
 | 3 | Error when trying to open the input file. |
 | 4 | Error when trying to create the output file. |
-| 5 | No ':' after label |
+| 5 | No colon after label |
+| 6 | No comma after first operator of COPY |

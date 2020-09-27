@@ -28,7 +28,7 @@ int table_position(char key[]);
 int main(int argc, char *argv[])
 {    
     //cheking call input
-    if (argc != 3) 
+    if (argc != 3)
     {
         miss_usage();
         return 1; //wrong number of inputs
