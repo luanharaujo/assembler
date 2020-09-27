@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-//definitions teste
+//definitions
 #define TABLE_SIZE 21
 enum section{BEFORE_SECTIONS, TEXT, DATA};
 typedef struct
