@@ -140,3 +140,13 @@ N: SPACE
 Some exemples codes to be assembled, given by the teacher, can be found in the exemples folder.
 
 ## Simulator
+
+## Returns
+| Return | Error |  
+|:--------:|:-------------|
+| 0 | No error. |
+| 1 | Wrong number of inputs in the program call.|
+| 2 | Wrong option. |
+| 3 | Error when trying to open the input file. |
+| 4 | Error when trying to create the output file. |
+| 5 | No ':' after label |
