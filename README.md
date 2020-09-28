@@ -24,7 +24,7 @@ The choice above was made with the following conditions;
 
 ## Prerequisites
 
-This program probably works on any Unix base system with a modern GCC. But It was developed in a **Ubuntu 20.04** running on a WSL inside a Windows 10. The compiler used was a **gcc (Ubuntu 9.3.0-10ubuntu2) 9.3.0**.
+This program probably works on any Unix base system with a modern GCC. But It was developed in a **Ubuntu** - 20.04.1 LTS running on a WSL - V1 inside a Windows 10. The compiler used was a **gcc (Ubuntu 9.3.0-10ubuntu2) 9.3.0**.
 
 ## Compilation
 ```
@@ -41,6 +41,23 @@ gcc -o montador montador.c
 ```
 ./montador -o input_file.pre
 ```
+
+## Returns Status
+| Return | Error |  
+|--------:|:-------------|
+| 0 | No error. |
+| 1 | Wrong number of inputs in the program call.|
+| 2 | Wrong option. |
+| 3 | Error when trying to open the input file. |
+| 4 | Error when trying to create the output file. |
+| 5 | No colon after label. |
+| 6 | No comma after first operator of COPY. |
+| 7 | Invalid section or section order. |
+| 8 | ENDMACRO whitout a MACRO. |
+| 9 | Exceeded maximum number of MACROS. |
+| 10 | Macro whit more than 2 arguments. |
+| 11 |Unallowed operation within a MACRO |
+| 12 |MACRO whitout a ENDMACRO. |
 
 ## Specifications:
 The instruction set of this hypothetic assemble have only 14 instructions, presented in the table below.   
@@ -141,16 +158,4 @@ Some exemples codes to be assembled, given by the teacher, can be found in the e
 
 ## Simulator
 
-## Returns
-| Return | Error |  
-|--------:|:-------------|
-| 0 | No error. |
-| 1 | Wrong number of inputs in the program call.|
-| 2 | Wrong option. |
-| 3 | Error when trying to open the input file. |
-| 4 | Error when trying to create the output file. |
-| 5 | No colon after label. |
-| 6 | No comma after first operator of COPY. |
-| 7 | Invalid section or section order. |
-| 8 | ENDMACRO whit out a MACRO. |
-| 9 | Exceeded maximum number of MACROS. |
+A simulator will be provided by the teacher to test the assembled codes. When this happens I will put the usage instructions in this section.
