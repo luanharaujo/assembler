@@ -262,11 +262,14 @@ int preprocessor_single_pass(FILE *fp_out, FILE *fp_in)
                 }
                 else if(strcasecmp(word, "SPACE") == 0)
                 {
-                    //TO DO
+                    fprintf(fp_out, "%s\n", word);
                 }
                 else if(strcasecmp(word, "CONST") == 0)
                 {
-                    //TO DO
+                    fprintf(fp_out, "%s ", word);
+                    my_fscanf(fp_in, word);
+                    check_equ(equ_list.next, word);
+                    fprintf(fp_out, "%s\n", word);
                 }
                 else if(strcasecmp(word, "EQU") == 0)
                 {
@@ -276,7 +279,36 @@ int preprocessor_single_pass(FILE *fp_out, FILE *fp_in)
                 }
                 else if(strcasecmp(word, "IF") == 0)
                 {
-                    //TO DO
+                    //saving position
+                    fflush(fp_in);
+                    unsigned long fp_memory = ftell(fp_in);
+                    
+                    //redding and search label 
+                    my_fscanf(fp_in, word);
+                    check_equ(equ_list.next, word);
+                    
+                    if (strcasecmp(word, "0") == 0)
+                    {
+                        //just jump 2 lines
+                        fseek(fp_in, fp_memory, SEEK_SET);
+                        char c;
+                        int lines = 0;
+                        while(lines < 2)
+                        {
+                            fscanf(fp_in, "%c", &c);
+                            if (c == '\n')
+                            {
+                                lines++;
+                            }
+                        }
+                    }
+                    else if (strcasecmp(word, "0") != 1) //neither 0 or 1 
+                    {
+                        printf("Error: IF must receve 0 or 1.\n");
+                        return clean_up_and_return(14);
+                    }
+                    //else is a 1 and do nothig
+
                 }
                 else if(strcasecmp(word, "MACRO") == 0)
                 {

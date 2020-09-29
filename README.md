@@ -59,6 +59,7 @@ gcc -o montador montador.c
 | 11 |Unallowed operation within a MACRO |
 | 12 |MACRO whitout a ENDMACRO. |
 | 13 |MACRO definition with more arguments than the MACRO call. |
+| 14 |IF argument is neither a "0" or a "1". |
 
 ## Specifications:
 The instruction set of this hypothetic assemble have only 14 instructions, presented in the table below.   
