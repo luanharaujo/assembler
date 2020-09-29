@@ -47,6 +47,8 @@ int clean_up_and_return(int error_code);
 int file_exists(char file_name[]);
 FILE* naming_and_opening_macro_file(int macro_index);
 unsigned long copy_macro(FILE *fp_in, FILE *fp_macro);
+void insert_macro(int index, FILE *fp_out, char parameters[MAX_MACROS_ARGS][MAX_TOKEN_NAME_SIZE]);
+void remove_ending_comma(char *string);
 
 int main(int argc, char *argv[])
 {    
@@ -131,7 +133,18 @@ int preprocessor_single_pass(FILE *fp_out, FILE *fp_in)
             int index = macro_index_finder(word);
             if(index != -1)//is a MACRO call!
             {
-                //TO DO
+                char parameters[MAX_MACROS_ARGS][MAX_TOKEN_NAME_SIZE];
+                for (int i = 0; i < macros[index].number_of_args; i++)
+                {
+                    if (my_fscanf(fp_in, word) == EOF)
+                    {
+                        printf("Error: Missing arguments on a MACRO call in the last line of the file.\n");
+                        return clean_up_and_return(13);
+                    }
+                    strcpy(parameters[i], word);
+                    remove_ending_comma(parameters[i]);
+                }
+                insert_macro(index, fp_out, parameters);
             }
             else //ok, must be a label then.
             {
@@ -154,7 +167,7 @@ int preprocessor_single_pass(FILE *fp_out, FILE *fp_in)
                 //storege for future usage
                 strcpy(last_label, word);
                 //removing the colum (':') character
-                last_label[strlen(last_label - 1)] = '\0';
+                last_label[strlen(last_label) - 1] = '\0';
                 fflush(fp_out);
                 possition_before_last_label =  ftell(fp_out);
                 //putting on the pre-precessed file
@@ -268,13 +281,8 @@ int preprocessor_single_pass(FILE *fp_out, FILE *fp_in)
                        if(word[0] == '&')
                        {
                            is_parameter = 1;
-                           //removing the comman, if it has one
-                           if(word[strlen(word) - 1] == ',')
-                           {
-                               word[strlen(word) - 1] = '\0';
-                           }
-                           //storing whitout the &
-                           strcpy(macros[macro_index].args_names[macros[macro_index].number_of_args++], word + 1); 
+                           //storing with the comman, if it has one
+                           strcpy(macros[macro_index].args_names[macros[macro_index].number_of_args++], word); 
                        }
                        else
                        {
@@ -304,6 +312,7 @@ int preprocessor_single_pass(FILE *fp_out, FILE *fp_in)
                         return clean_up_and_return(12);
                     }
                     fseek(fp_in, new_position, SEEK_SET);
+                    fflush(fp);
                     fclose(fp);
                 }
                 else //ENDMACRO whitout MACRO before
@@ -443,7 +452,7 @@ unsigned long copy_macro(FILE *fp_in, FILE *fp_macro)
     {
         return -2;
     }
-    while (strcmp(word, "ENDMACRO") != 0)
+    while (strcasecmp(word, "ENDMACRO") != 0)
     {
         int position = table_position(word);
         if (position == -1 || !operations[position].is_instructions)
@@ -512,6 +521,57 @@ int my_fscanf(FILE *fp, char string[])
        while (c != '\n');
     }
     return 1; 
+}
+
+//append a macro in the position index on the macro vector
+//in the file poited by fp
+void insert_macro(int index, FILE *fp_out, char parameters[MAX_MACROS_ARGS][MAX_TOKEN_NAME_SIZE])
+{
+    FILE *fp_in = fopen(macros[index].file_name, "r");
+    char word[MAX_TOKEN_NAME_SIZE];
+    
+    while (fscanf(fp_in, "%s", word) != EOF)
+    {
+        fprintf(fp_out,"%s ", word);
+        int position = table_position(word);
+        for (int i = 0; i < operations[position].number_of_operators; i++)
+        {
+            fscanf(fp_in, "%s", word);
+            
+            //checking if is a argument
+            for(int j = 0; j < macros[index].number_of_args; j++)
+            {
+                char tmp[MAX_TOKEN_NAME_SIZE];
+                strcpy(tmp, macros[index].args_names[j]);
+                remove_ending_comma(tmp);
+                remove_ending_comma(word);
+                if(strcasecmp(word, tmp) == 0)
+                {
+                    strcpy(word, parameters[j]);
+                }
+            }
+            if((strcasecmp(operations[position].mnemonic, "COPY") == 0 ) && (i == 0))
+            {
+                fprintf(fp_out,"%s, ", word);
+            }
+            else
+            {
+                fprintf(fp_out,"%s ", word);
+            }
+            
+        }
+        fprintf(fp_out,"\n");
+    }
+
+    fclose(fp_in);
+}
+
+void remove_ending_comma(char *string)
+{
+    if (string[strlen(string) - 1] == ',')
+    {
+        string[strlen(string) - 1] = '\0';
+    }
 }
 
 void init_macros(void)
