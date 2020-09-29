@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 //definitions
@@ -28,6 +29,15 @@ typedef struct
 }
 macro;
 
+typedef struct equ_cell_struct
+{
+    char label[MAX_TOKEN_NAME_SIZE];
+    char value[MAX_TOKEN_NAME_SIZE];
+    struct equ_cell_struct *next;
+}
+equ_cell;
+
+
 //global variables
 operation operations[TABLE_SIZE];
 macro macros[MAX_MACROS];
@@ -49,6 +59,9 @@ FILE* naming_and_opening_macro_file(int macro_index);
 unsigned long copy_macro(FILE *fp_in, FILE *fp_macro);
 void insert_macro(int index, FILE *fp_out, char parameters[MAX_MACROS_ARGS][MAX_TOKEN_NAME_SIZE]);
 void remove_ending_comma(char *string);
+void add_equ(equ_cell *list, char *label, char *value);
+void free_equ_cell_list(equ_cell *list);
+void check_equ(equ_cell *list, char *string);
 
 int main(int argc, char *argv[])
 {    
@@ -123,6 +136,9 @@ int preprocessor_single_pass(FILE *fp_out, FILE *fp_in)
     char last_label[MAX_TOKEN_NAME_SIZE];
     unsigned long possition_before_last_label;
     enum section current_section = BEFORE_SECTIONS;
+    equ_cell equ_list;
+
+    equ_list.next = NULL;
 
     while (my_fscanf(fp_in, word) != EOF)
     {
@@ -148,6 +164,7 @@ int preprocessor_single_pass(FILE *fp_out, FILE *fp_in)
             }
             else //ok, must be a label then.
             {
+                
                 int label_length = strlen(word);
                 //lookin for the ":" to check if there are any spaces
                 if (word[label_length - 1] != ':')
@@ -190,6 +207,7 @@ int preprocessor_single_pass(FILE *fp_out, FILE *fp_in)
                     if (strcasecmp(word, "COPY") != 0)
                     {
                         my_fscanf(fp_in, word);
+                        check_equ(equ_list.next, word);
                         fprintf(fp_out, "%s\n", word);
                     }
                     else //is COPY
@@ -211,9 +229,15 @@ int preprocessor_single_pass(FILE *fp_out, FILE *fp_in)
                             word[operator_length] = ',';
                             word[operator_length + 1] = '\0';
                         }
+                        word[strlen(word) - 1] = '\0';
+                        check_equ(equ_list.next, word);
+                        word[strlen(word) + 1] = '\0';
+                        word[strlen(word)] = ',';
+
                         //putting on the pre-precessed file
                         fprintf(fp_out, "%s ", word);
                         my_fscanf(fp_in, word);
+                        check_equ(equ_list.next, word);
                         fprintf(fp_out, "%s\n", word);
                     }
                 }
@@ -246,7 +270,9 @@ int preprocessor_single_pass(FILE *fp_out, FILE *fp_in)
                 }
                 else if(strcasecmp(word, "EQU") == 0)
                 {
-                    //TO DO
+                    my_fscanf(fp_in, word);
+                    add_equ(&equ_list, last_label, word);
+                    fseek(fp_out, possition_before_last_label, SEEK_SET);
                 }
                 else if(strcasecmp(word, "IF") == 0)
                 {
@@ -323,6 +349,8 @@ int preprocessor_single_pass(FILE *fp_out, FILE *fp_in)
             }
         }
     }
+
+    free_equ_cell_list(equ_list.next);
 
     return clean_up_and_return(0);
 }
@@ -571,6 +599,43 @@ void remove_ending_comma(char *string)
     if (string[strlen(string) - 1] == ',')
     {
         string[strlen(string) - 1] = '\0';
+    }
+}
+
+void add_equ(equ_cell *list, char *label, char *value)
+{
+    while(list->next != NULL)
+    {
+        list = list->next;
+    }
+    list->next = malloc(sizeof(equ_cell));
+    list = list->next;
+    list->next = NULL;
+    strcpy(list->label, label);
+    strcpy(list->value, value);
+}
+
+void free_equ_cell_list(equ_cell *list)
+{
+    if(list == NULL)
+    {
+        return;
+    }
+
+    free_equ_cell_list(list->next);
+    free(list);
+}
+
+void check_equ(equ_cell *list, char *string)
+{
+    while (list != NULL)
+    {
+        if (strcasecmp(list->label, string) == 0)
+        {
+            strcpy(string, list->value);
+            return;
+        }
+        list = list->next;
     }
 }
 
