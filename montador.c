@@ -542,44 +542,47 @@ unsigned long copy_macro(FILE *fp_in, FILE *fp_macro)
 //same as fscanf(fp_in, "%s", word) but ignores comments marked by ';'
 int my_fscanf(FILE *fp, char string[])
 {
-    int comment = 0;
-    char c;
-
-    fflush(fp);
-    unsigned long fp_memory = ftell(fp);
-
-    if (fscanf(fp, "%s", string) == EOF)
+    do
     {
-        return EOF;
-    }
+        int comment = 0;
+        char c;
 
-    //looking for the comment marker
-    for (int i = 0; string[i] != '\0'; i++)
-    {
-        if(string[i] == ';')
+        fflush(fp);
+        unsigned long fp_memory = ftell(fp);
+
+        if (fscanf(fp, "%s", string) == EOF)
         {
-            comment = 1;
-            string[i] = '\0';
-            break;
+            return EOF;
+        }
+
+        //looking for the comment marker
+        for (int i = 0; string[i] != '\0'; i++)
+        {
+            if(string[i] == ';')
+            {
+                comment = 1;
+                string[i] = '\0';
+                break;
+            }
+        }
+
+        if (comment)
+        {
+        fseek(fp, fp_memory, SEEK_SET);
+        do
+        {
+            if (fscanf(fp, "%c", &c) == EOF)
+            {
+                //comment in the last line of the code whitout \n in the end
+                //ou em bom português, uma puta falta de sacanagem
+                return 1;
+            }
+        }
+        while (c != '\n');
         }
     }
+    while (strlen(string) == 0);
 
-    if (comment)
-    {
-       fseek(fp, fp_memory, SEEK_SET);
-       do
-       {
-           fflush(fp);
-           fp_memory = ftell(fp);
-           if (fscanf(fp, "%c", &c) == EOF)
-           {
-               //comment in the last line of the code whitout \n in the end
-               //ou em bom português, uma puta falta de sacanagem
-               return 1;
-           }
-       }
-       while (c != '\n');
-    }
     return 1; 
 }
 
