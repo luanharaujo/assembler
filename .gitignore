@@ -2,4 +2,4 @@
 *.pre
 *.obj
 montador
-/vscode/*
+/.vscode/*
