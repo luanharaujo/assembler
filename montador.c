@@ -37,6 +37,23 @@ typedef struct equ_cell_struct
 }
 equ_cell;
 
+typedef struct dependece_list_cell_struct
+{
+    int position;
+    struct dependece_list_cell_struct *next;
+}
+dependece_list_cell;
+
+
+typedef struct symbol_cell_struct
+{
+    char label[MAX_TOKEN_NAME_SIZE];
+    int position;
+    dependece_list_cell *backlog;
+    struct symbol_cell_struct *next;
+}
+symbol_cell;
+
 
 //global variables
 operation operations[TABLE_SIZE];
@@ -48,6 +65,7 @@ void miss_usage(void);
 int preprocessor(char f_in_name[]);
 int assembler(char f_in_name[]);
 int preprocessor_single_pass(FILE *fp_out, FILE *fp_in);
+int assembler_single_pass(FILE *fp_out, FILE *fp_in);
 void init_operations(void);
 void init_macros(void);
 int table_position(char key[]);
@@ -61,7 +79,11 @@ void insert_macro(int index, FILE *fp_out, char parameters[MAX_MACROS_ARGS][MAX_
 void remove_ending_comma(char *string);
 void add_equ(equ_cell *list, char *label, char *value);
 void free_equ_cell_list(equ_cell *list);
+void free_symbol_list(symbol_cell *list);
+void free_backlog(dependece_list_cell *list);
 void check_equ(equ_cell *list, char *string);
+int get_label_index(symbol_cell *list, char *word, int currente_position);
+void add_label_index(symbol_cell *list, int position,int  *output, char *word);
 
 int main(int argc, char *argv[])
 {    
@@ -389,8 +411,170 @@ int preprocessor_single_pass(FILE *fp_out, FILE *fp_in)
 
 int assembler(char f_in_name[])
 {
-    //TO DO
+    //open input file
+    FILE *fp_in = fopen(f_in_name, "r");
+    if (fp_in == NULL)
+    {
+        printf("Error when trying to open the file %s\n", f_in_name);
+        return clean_up_and_return(3);
+    }
+
+    //open output file
+    int name_length = strlen(f_in_name);
+    char f_out_name[name_length];
+    strcpy(f_out_name, f_in_name);
+    strcpy(f_out_name + name_length - 3, "obj");
+    FILE *fp_out = fopen(f_out_name, "w");
+    if (fp_out == NULL)
+    {
+        printf("Error when trying to create the file %s\n", f_out_name);
+        fclose(fp_in);
+        return clean_up_and_return(4);
+    }
+
+    int ret = assembler_single_pass(fp_out, fp_in);
+    
+    //all done bye bye
+    fclose(fp_out);
+    fclose(fp_in);
+    return ret;
+}
+
+int assembler_single_pass(FILE *fp_out, FILE *fp_in)
+{
+    //discovering the size of the file (in bytes)
+    fseek(fp_in, 0L, SEEK_END);
+    fflush(fp_in);
+    long int size_of_file = ftell(fp_in);
+    rewind(fp_in);
+
+    int output[size_of_file];
+    int counter = 0;
+    char word[MAX_MACRO_FILE_NAME_SIZE];
+
+    symbol_cell symbol_list;
+    symbol_list.next = NULL;
+
+    while (fscanf(fp_in, "%s", word) != EOF)
+    {
+        if (strcasecmp(word, "SECTION") == 0)
+        {
+            fscanf(fp_in, "%s", word);
+        }
+        else if (strcasecmp(word, "SPACE") == 0)
+        {
+            output[counter++] = 0;
+        }
+        else if (strcasecmp(word, "CONST") == 0)
+        {
+            fscanf(fp_in, "%d", &output[counter++]);
+        }
+        else if (word[strlen(word) - 1] == ':') //is a label definition
+        {
+            word[strlen(word) - 1] = '\0';
+            add_label_index(&symbol_list, counter, output, word);
+        }
+        else //must be a instruction
+        {
+            int position = table_position(word);
+            output[counter++] = operations[position].code;
+            for(int i = 0; i < operations[position].number_of_operators; i++)
+            {
+                fscanf(fp_in, "%s", word);
+                remove_ending_comma(word);
+                output[counter] = get_label_index(&symbol_list, word, counter);
+                counter++;
+            }
+        }
+    }
+
+    //TO DO:
+    for (int i = 0; i < counter; i++)
+    {
+        fprintf(fp_out, "%d ", output[i]);
+    }
+
+    free_symbol_list(symbol_list.next);
     return 0;
+}
+
+void add_label_index(symbol_cell *list, int position, int  *output, char *word)
+{
+    while (list->next != NULL)
+    {
+        list = list->next;
+        if (strcasecmp(list->label, word) == 0)
+        {
+            //found the word in the list
+            list->position = position;
+            
+            dependece_list_cell *aux = list->backlog;
+            while (aux != NULL)
+            {
+                output[aux->position] = position;
+                aux = aux->next; 
+            }
+            
+
+            free_backlog(list->backlog);
+            list->backlog = NULL;
+
+            return;
+        }
+    }
+    //if comes to that, means that is not on the list yet
+    list->next = malloc(sizeof(symbol_cell));
+    list = list->next;
+    list->next = NULL;
+    list->position = position;
+    strcpy(list->label, word);
+
+    list->backlog = NULL;
+}
+
+int get_label_index(symbol_cell *list, char *word, int currente_position)
+{
+    while (list->next != NULL)
+    {
+        list = list->next;
+        if (strcasecmp(list->label, word) == 0)
+        {
+            //found the word in the list
+            if (list->position != -1)
+            {  
+                //label already defined
+                return list->position;
+            }
+            else
+            {
+                dependece_list_cell *aux = list->backlog;
+                while (aux->next != NULL)
+                {
+                    aux = aux->next;
+                }
+                aux->next = malloc(sizeof(dependece_list_cell));
+                aux = aux->next;
+                aux->next = NULL;
+                aux->position = currente_position;
+
+                //putting a temporary -1 on the output vector
+                return -1;
+            }
+        }
+    }
+    //if comes to that, means that is not on the list yet
+    list->next = malloc(sizeof(symbol_cell));
+    list = list->next;
+    list->next = NULL;
+    list->position = -1;
+    strcpy(list->label, word);
+
+    list->backlog = malloc(sizeof(dependece_list_cell));
+    list->backlog->next = NULL;
+    list->backlog->position = currente_position;
+
+    //putting a temporary -1 on the output vector
+    return -1;
 }
 
 //check if is allowed to change from current section to a section named name_new_section
@@ -649,6 +833,30 @@ void add_equ(equ_cell *list, char *label, char *value)
     strcpy(list->label, label);
     strcpy(list->value, value);
 }
+
+void free_backlog(dependece_list_cell *list)
+{
+    if(list == NULL)
+    {
+        return;
+    }
+
+    free_backlog(list->next);
+    free(list);
+}
+
+void free_symbol_list(symbol_cell *list)
+{
+    if(list == NULL)
+    {
+        return;
+    }
+    free_backlog(list->backlog);
+    free_symbol_list(list->next);
+    free(list);
+}
+
+
 
 void free_equ_cell_list(equ_cell *list)
 {
