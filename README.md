@@ -13,7 +13,7 @@ The student have to make a choice between one of the follow:
 
 - [x] The assembler will accept MACRO directive; or
 - [ ] identify errors during assembly.
-
+√
 ### **On this work I chose accept MACRO directive.** 
 
 The choice above was made with the following conditions;
@@ -160,4 +160,8 @@ Some exemples codes to be assembled, given by the teacher, can be found in the e
 
 ## Simulator
 
-A simulator will be provided by the teacher to test the assembled codes. When this happens I will put the usage instructions in this section.
+There is a simulator in the simulator folder that can be used to run the assembled codes. To use it:
+
+```./simulador path/to/file.obj```
+
+No messages will by display on the inputs. You need to know in advance what are the inputs and the order you need to provide them.
